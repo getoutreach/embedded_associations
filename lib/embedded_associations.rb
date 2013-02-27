@@ -90,7 +90,6 @@ module EmbeddedAssociations
       end
 
       definition.each do |name, child_definition|
-        binding.pry unless parent
         reflection = parent.class.reflect_on_association(name)
         attrs = parent_params && parent_params.delete(name.to_s)
         

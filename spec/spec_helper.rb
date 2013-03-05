@@ -13,8 +13,6 @@ require 'rspec/rails'
 
 require 'support/serialization_helpers'
 
-puts File.expand_path("../support/app/db/migrate/", __FILE__)
-
 ActiveRecord::Migrator.migrate(File.expand_path("../support/app/db/migrate/", __FILE__))
 
 RSpec.configure do |config|

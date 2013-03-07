@@ -30,6 +30,10 @@ module EmbeddedAssociations
     resource_name
   end
 
+  def filter_attributes(name, attrs, action)
+    attrs
+  end
+
   # Simple callbacks for now, eventually should use a filter system
   def before_embedded(record, action); end
 
@@ -100,10 +104,6 @@ module EmbeddedAssociations
       end
     end
 
-    def filter_attributes(name, attrs, action)
-      attrs
-    end
-
     def handle_plural_resource(parent, name, attr_array, child_definition)
       current_assoc = parent.send(name)
 
@@ -115,16 +115,17 @@ module EmbeddedAssociations
       end
 
       attr_array.each do |attrs|
+        attrs = ActionController::Parameters.new(attrs)
         if id = attrs['id']
           # can't use current_assoc.find(id), see http://stackoverflow.com/questions/11605120/autosave-ignored-on-has-many-relation-what-am-i-missing
           r = current_assoc.find{|r| r.id == id.to_i}
-          attrs = filter_attributes(r.class.name, attrs, :update)
+          attrs = controller.send(:filter_attributes, r.class.name, attrs, :update)
           handle_resource(child_definition, r, attrs) if child_definition
           r.assign_attributes(attrs)
           run_before_update_callbacks(r)
         else
           r = current_assoc.build()
-          attrs = filter_attributes(r.class.name, attrs, :create)
+          attrs = controller.send(:filter_attributes, r.class.name, attrs, :create)
           handle_resource(child_definition, r, attrs) if child_definition
           r.assign_attributes(attrs)
           run_before_create_callbacks(r)
@@ -134,10 +135,11 @@ module EmbeddedAssociations
 
     def handle_singular_resource(parent, name, attrs, child_definition)
       current_assoc = parent.send(name)
+      attrs = ActionController::Parameters.new(attrs)
       
       if r = current_assoc
         if attrs
-          attrs = filter_attributes(r.class.name, attrs, :update)
+          attrs = controller.send(:filter_attributes, r.class.name, attrs, :update)
           handle_resource(child_definition, r, attrs) if child_definition
           r.assign_attributes(attrs)
           run_before_update_callbacks(r)
@@ -148,7 +150,7 @@ module EmbeddedAssociations
         end
       elsif attrs
         r = parent.send("build_#{name}")
-        attrs = filter_attributes(r.class.name, attrs, :create)
+        attrs = controller.send(:filter_attributes, r.class.name, attrs, :create)
         handle_resource(child_definition, r, attrs) if child_definition
         r.assign_attributes(attrs)
         run_before_create_callbacks(r)

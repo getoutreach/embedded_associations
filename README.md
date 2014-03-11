@@ -30,6 +30,18 @@ class PostsController < ApplicationController
 end
 ```
 
+Inside of your controllers actions, the `handle_embedded_associations` method should be called:
+
+```ruby
+def create
+  params = params.require(:post).permit(:title, tags: [:name], comments: [:title, user: [:username]])
+  post = Post.new
+  handle_embedded_associations(post, params)
+  post.update_attributes(params)
+  render json: post
+end
+```
+
 Behind the scenes, this will make the controller parse out sub-params passed in and perform the necessary ActiveRecord model manipulation. E.g., consider the params hash below:
 
 ```ruby
@@ -47,15 +59,36 @@ Based on the declared `embedded_association`s, the controller will manipulate th
 
 ### Controller and Model Pre-Requisites
 
-EmbeddedAssociations depends on your controller implementation to have two methods available, `resource` and `resource_name`. These methods will be familiar and already provided to people who use [CanCan's](https://github.com/ryanb/cancan) `load_resource` macro.
-
-When defining the relationships in the model, it is also important to set the `autosave` and `dependent` options on the association:
+When defining the relationships in the model, it is important to set the `autosave` and `dependent` options on the association:
 
 ```ruby
 class Post < ActiveRecord::Base
   has_many :comments, autosave: true, dependent: :destroy
   has_many :tags, autosave: true, dependent: :destroy
 end
+```
+
+### Strong Parameters
+
+As might be expected, embedded associations must have their attributes permitted via the strong parameters api. For instance, a controller with the following embedded associates configuration:
+
+```ruby
+embedded_association :comments => {:user => :account}
+embedded_association :user => [:account]
+embedded_association [:tags]
+embedded_association :category
+```
+
+The attributes of the embedded associations must be explicitly permitted:
+
+```ruby
+params.require(:post).permit(
+  :title,
+  comments: [:content, user: [:name, :email, account: [:note] ]],
+  user: [:name, :email, account: [:note] ],
+  tags: [:name],
+  category: [:name]
+)
 ```
 
 ## Contributing

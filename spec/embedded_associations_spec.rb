@@ -9,6 +9,7 @@ describe PostsController, type: :controller do
 
       it "should create child records" do
         json = post :create, post: {
+          title: 'ma post',
           tags: [{},{}]
         }
 
@@ -23,7 +24,7 @@ describe PostsController, type: :controller do
     context "updating" do
 
       let(:tags) {[Tag.create, Tag.create]}
-      let(:resource) { Post.create({tags: tags}, without_protection: true) }
+      let(:resource) { Post.create(tags: tags) }
       let(:hash) { serialize(resource) }
 
       it "should create new child records" do
@@ -68,6 +69,7 @@ describe PostsController, type: :controller do
 
       it "should create child record" do
         json = post :create, post: {
+          title: 'ma post',
           category: {name: 'ember-data'}
         }
 
@@ -100,7 +102,7 @@ describe PostsController, type: :controller do
 
       context do
 
-        let(:resource) { Post.create({category: Category.create(name: 'ember')}, without_protection: true) }
+        let(:resource) { Post.create(category: Category.create(name: 'ember')) }
 
         it "should destroy nil child record" do
           hash[:category] = nil
@@ -134,6 +136,7 @@ describe PostsController, type: :controller do
 
       it "should create hierarchy" do
         json = post :create, post: {
+          title: 'ma post',
           user: {name: 'G$', account: {}}
         }
 
@@ -169,7 +172,7 @@ describe PostsController, type: :controller do
 
       context do
 
-        let(:resource) { Post.create({user: User.create({name: 'G$', account: Account.create}, without_protection: true)}, without_protection: true) }
+        let(:resource) { Post.create({user: User.create({name: 'G$', account: Account.create})}) }
 
         it "should destroy nil child hierarchy" do
           hash[:user] = nil
@@ -227,8 +230,9 @@ describe PostsController, type: :controller do
 
     context "creating" do
 
-      it "should create hierarchy" do
+      it "should create hierarchy", focus: true do
         json = post :create, post: {
+          title: 'ma post',
           comments: [{user: {name: 'G$', account: {}}}]
         }
 
@@ -271,7 +275,7 @@ describe PostsController, type: :controller do
         let(:resource) {
           p = Post.create
           c = p.comments.create
-          u = c.create_user({account: Account.create}, without_protection: true)
+          u = c.create_user({account: Account.create})
           c.save
           p
         }

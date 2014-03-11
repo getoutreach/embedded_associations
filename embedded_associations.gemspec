@@ -10,12 +10,12 @@ Gem::Specification.new do |gem|
   gem.email         = ["ghempton@gmail.com"]
   gem.description   = %q{ActiveRecord controller-level support for embedded associations}
   gem.summary       = %q{ActiveRecord controller-level support for embedded associations}
-  gem.homepage      = "https://github.com/GroupTalent/embedded_associations"
+  gem.homepage      = "https://github.com/getoutreach/embedded_associations"
 
   gem.files         = `git ls-files`.split($/)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.require_paths = ["lib"]
 
-  gem.add_dependency "railties", "> 3.0.0"
+  gem.add_dependency "railties", "> 4.0.0"
 end

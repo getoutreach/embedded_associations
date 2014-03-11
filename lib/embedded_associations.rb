@@ -11,23 +11,14 @@ module EmbeddedAssociations
       def self.embedded_association(definition)
         unless embedded_associations
           self.embedded_associations = Definitions.new
-          before_filter :handle_embedded_associations, only: [:update, :create, :destroy]
         end
         self.embedded_associations = embedded_associations.add_definition(definition)
       end
     end
   end
 
-  def handle_embedded_associations
-    Processor.new(embedded_associations, self).run
-  end
-
-  def root_resource
-    resource
-  end
-
-  def root_resource_name
-    resource_name
+  def handle_embedded_associations(resource, params)
+    Processor.new(embedded_associations, self, resource, params).run
   end
 
   def filter_attributes(name, attrs, action)
@@ -67,15 +58,19 @@ module EmbeddedAssociations
 
     attr_reader :definitions
     attr_reader :controller
+    attr_reader :resource
+    attr_reader :params
 
-    def initialize(definitions, controller)
+    def initialize(definitions, controller, resource, params)
       @definitions = definitions
       @controller = controller
+      @params = params
+      @resource = resource
     end
 
     def run
       definitions.each do |definition|
-        handle_resource(definition, controller.root_resource, controller.params[controller.root_resource_name])
+        handle_resource(definition, resource, params)
       end
     end
 
@@ -94,7 +89,7 @@ module EmbeddedAssociations
       definition.each do |name, child_definition|
         reflection = parent.class.reflect_on_association(name)
         attrs = parent_params && parent_params.delete(name.to_s)
-        
+
         if reflection.collection?
           attrs ||= []
           handle_plural_resource parent, name, attrs, child_definition
@@ -115,7 +110,6 @@ module EmbeddedAssociations
       end
 
       attr_array.each do |attrs|
-        attrs = ActionController::Parameters.new(attrs)
         if id = attrs['id']
           # can't use current_assoc.find(id), see http://stackoverflow.com/questions/11605120/autosave-ignored-on-has-many-relation-what-am-i-missing
           r = current_assoc.find{|r| r.id == id.to_i}
@@ -135,8 +129,7 @@ module EmbeddedAssociations
 
     def handle_singular_resource(parent, name, attrs, child_definition)
       current_assoc = parent.send(name)
-      attrs = ActionController::Parameters.new(attrs)
-      
+
       if r = current_assoc
         if attrs
           attrs = controller.send(:filter_attributes, r.class.name, attrs, :update)

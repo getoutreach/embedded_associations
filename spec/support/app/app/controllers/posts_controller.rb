@@ -9,12 +9,16 @@ class PostsController < ApplicationController
   attr_accessor :resource
 
   def create
-    resource.update_attributes(params[:post])
+    params = post_params
+    handle_embedded_associations(resource, params)
+    resource.update_attributes(params)
     render json: resource
   end
 
   def update
-    resource.update_attributes(params[:post])
+    params = post_params
+    handle_embedded_associations(resource, params)
+    resource.update_attributes(params)
     render json: resource
   end
 
@@ -35,6 +39,16 @@ class PostsController < ApplicationController
 
   def resource_name
     'post'
+  end
+
+  def post_params
+    params.require(:post).permit(
+      :title,
+      comments: [:content, user: [:name, :email, account: [:note] ]],
+      user: [:name, :email, account: [:note] ],
+      tags: [:name],
+      category: [:name]
+    )
   end
 
 end

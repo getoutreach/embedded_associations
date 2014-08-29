@@ -87,8 +87,13 @@ module EmbeddedAssociations
       end
 
       definition.each do |name, child_definition|
+        if !parent_params || !parent_params.has_key?(name.to_s)
+          next
+        end
+        
         reflection = parent.class.reflect_on_association(name)
-        attrs = parent_params && parent_params.delete(name.to_s)
+        
+        attrs = parent_params.delete(name.to_s)
 
         if reflection.collection?
           attrs ||= []
@@ -131,7 +136,7 @@ module EmbeddedAssociations
       current_assoc = parent.send(name)
 
       if r = current_assoc
-        if attrs
+        if attrs && attrs != ''
           attrs = controller.send(:filter_attributes, r.class.name, attrs, :update)
           handle_resource(child_definition, r, attrs) if child_definition
           r.assign_attributes(attrs)
@@ -141,7 +146,7 @@ module EmbeddedAssociations
           run_before_destroy_callbacks(r)
           r.mark_for_destruction
         end
-      elsif attrs
+      elsif attrs && attrs != ''
         r = parent.send("build_#{name}")
         attrs = controller.send(:filter_attributes, r.class.name, attrs, :create)
         handle_resource(child_definition, r, attrs) if child_definition

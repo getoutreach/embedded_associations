@@ -46,6 +46,16 @@ describe PostsController, type: :controller do
 
         Tag.all.each{ |t| expect(t.post).to_not be_nil }
       end
+      
+      it "should not destory if entire field missing" do
+        hash.delete(:tags)
+        json = post :update, :id => resource.id, post: hash
+
+        expect(Post.count).to eq(1)
+        expect(Tag.count).to eq(2)
+
+        Tag.all.each{ |t| expect(t.post).to_not be_nil }
+      end
 
       it "should update modified child records" do
         hash[:tags].first[:name] = 'modified'
@@ -104,8 +114,8 @@ describe PostsController, type: :controller do
 
         let(:resource) { Post.create(category: Category.create(name: 'ember')) }
 
-        it "should destroy nil child record" do
-          hash[:category] = nil
+        it "should destroy blank child record" do
+          hash[:category] = ''
           json = post :update, :id => resource.id, post: hash
 
           expect(Post.count).to eq(1)
@@ -114,6 +124,14 @@ describe PostsController, type: :controller do
           resource.reload
 
           expect(resource.category).to be_nil
+        end
+        
+        it "should not destroy missing child field" do
+          hash.delete(:category)
+          json = post :update, :id => resource.id, post: hash
+
+          expect(Post.count).to eq(1)
+          expect(Category.count).to eq(1)
         end
 
         it "should update modified child records" do
@@ -174,8 +192,8 @@ describe PostsController, type: :controller do
 
         let(:resource) { Post.create({user: User.create({name: 'G$', account: Account.create})}) }
 
-        it "should destroy nil child hierarchy" do
-          hash[:user] = nil
+        it "should destroy blank child hierarchy" do
+          hash[:user] = ''
           json = post :update, :id => resource.id, post: hash
 
           expect(Post.count).to eq(1)
@@ -187,8 +205,8 @@ describe PostsController, type: :controller do
           expect(resource.user).to be_nil
         end
 
-        it "should destroy nil grand-child" do
-          hash[:user] = {name: 'G$'}
+        it "should destroy blank grand-child" do
+          hash[:user] = {name: 'G$', account: ''}
           json = post :update, :id => resource.id, post: hash
 
           expect(Post.count).to eq(1)
@@ -199,6 +217,16 @@ describe PostsController, type: :controller do
 
           expect(resource.user.account).to be_nil
         end
+        
+        it "should not destroy missing grand-child" do
+          hash[:user] = {name: 'G$'}
+          json = post :update, :id => resource.id, post: hash
+
+          expect(Post.count).to eq(1)
+          expect(User.count).to eq(1)
+          expect(Account.count).to eq(1)
+        end
+
 
         it "should update modified child records" do
           hash[:user][:name] = 'wes'
@@ -230,7 +258,7 @@ describe PostsController, type: :controller do
 
     context "creating" do
 
-      it "should create hierarchy", focus: true do
+      it "should create hierarchy" do
         json = post :create, post: {
           title: 'ma post',
           comments: [{user: {name: 'G$', account: {}}}]
@@ -280,8 +308,9 @@ describe PostsController, type: :controller do
           p
         }
 
-        it "should destroy nil child hierarchy" do
-          hash[:comments] = nil
+        it "should destroy blank child hierarchy" do
+          hash[:comments] = []
+          hash[:user] = ''
           json = post :update, :id => resource.id, post: hash
 
           expect(Post.count).to eq(1)
@@ -294,8 +323,8 @@ describe PostsController, type: :controller do
           expect(resource.comments).to be_empty
         end
 
-        it "should destroy nil grand-child hierarchy" do
-          hash[:comments].first[:user] = nil
+        it "should destroy blank grand-child hierarchy" do
+          hash[:comments].first[:user] = ''
           json = post :update, :id => resource.id, post: hash
 
           expect(Post.count).to eq(1)

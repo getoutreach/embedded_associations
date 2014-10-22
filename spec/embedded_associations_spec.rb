@@ -169,6 +169,29 @@ describe PostsController, type: :controller do
       end
 
     end
+    
+    context "creating with sti belongs_to" do
+
+      it "should create hierarchy" do
+        json = post :create, post: {
+          title: 'ma post',
+          user: {type: 'Admin', name: 'G$', account: {}}
+        }
+        
+        parsed_body = JSON.parse(response.body)
+        expect(parsed_body['post']['user']['type']).to eq('Admin')
+
+        expect(Post.count).to eq(1)
+        expect(User.count).to eq(1)
+        expect(Account.count).to eq(1)
+
+        resource = Post.first
+
+        expect(resource.user).to_not be_nil
+        expect(resource.user.account).to_not be_nil
+      end
+
+    end
 
     context "updating" do
 

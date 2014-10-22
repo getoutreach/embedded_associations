@@ -123,7 +123,13 @@ module EmbeddedAssociations
           r.assign_attributes(attrs)
           run_before_update_callbacks(r)
         else
-          r = current_assoc.build()
+          inheritance_column = parent.class.reflect_on_association(name).klass.inheritance_column
+          # need to pass in inheritance column in build to get correct class
+          r = if inheritance_column
+            current_assoc.build(attrs.slice(inheritance_column))
+          else
+            current_assoc.build()
+          end
           attrs = controller.send(:filter_attributes, r.class.name, attrs, :create)
           handle_resource(child_definition, r, attrs) if child_definition
           r.assign_attributes(attrs)
@@ -147,7 +153,13 @@ module EmbeddedAssociations
           r.mark_for_destruction
         end
       elsif attrs && attrs != ''
-        r = parent.send("build_#{name}")
+        inheritance_column = parent.class.reflect_on_association(name).klass.inheritance_column
+        # need to pass in inheritance column in build to get correct class
+        r = if inheritance_column
+          parent.send("build_#{name}", attrs.slice(inheritance_column))
+        else
+          parent.send("build_#{name}")
+        end
         attrs = controller.send(:filter_attributes, r.class.name, attrs, :create)
         handle_resource(child_definition, r, attrs) if child_definition
         r.assign_attributes(attrs)

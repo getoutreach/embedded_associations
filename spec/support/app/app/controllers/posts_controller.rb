@@ -45,7 +45,7 @@ class PostsController < ApplicationController
     params.require(:post).permit(
       :title,
       comments: [:content, user: [:name, :email, account: [:note] ]],
-      user: [:name, :email, account: [:note] ],
+      user: [:type, :name, :email, account: [:note] ],
       tags: [:name],
       category: [:name]
     )

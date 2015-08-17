@@ -6,7 +6,7 @@ module SerializationHelpers
   def serialize(model, root=false)
     options = {}
     options[:root] = false unless root
-    params = model.active_model_serializer.new(model, options).as_json
+    params = ActiveModel::Serializer.serializer_for(model).new(model, options).as_json
     params[:id] = model.id if root
     params
   end

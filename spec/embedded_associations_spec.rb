@@ -69,8 +69,18 @@ describe PostsController, type: :controller do
         Tag.all.each{ |t| expect(t.post).to_not be_nil }
       end
 
-    end
+      it "should ignore missing child records" do
+        hash[:tags].first[:name] = "modified"
+        hash[:tags] += [{ id: 0, name: "foo" }]
+        json = post :update, :id => resource.id, post: hash
 
+        expect(json.response_code).to eq(200)
+        expect(Post.count).to eq(1)
+        expect(Tag.count).to eq(2)
+
+        expect(Tag.first.name).to eq("modified")
+      end
+    end
   end
 
   describe "embedded belongs_to" do

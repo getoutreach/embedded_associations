@@ -46,7 +46,7 @@ class PostsController < ApplicationController
       :title,
       comments: [:content, user: [:name, :email, account: [:note] ]],
       user: [:type, :name, :email, account: [:note] ],
-      tags: [:name],
+      tags: [:id, :name],
       category: [:name]
     )
   end

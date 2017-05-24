@@ -118,10 +118,13 @@ module EmbeddedAssociations
         if id = attrs['id']
           # can't use current_assoc.find(id), see http://stackoverflow.com/questions/11605120/autosave-ignored-on-has-many-relation-what-am-i-missing
           r = current_assoc.find{|r| r.id == id.to_i}
-          attrs = controller.send(:filter_attributes, r.class.name, attrs, :update)
-          handle_resource(child_definition, r, attrs) if child_definition
-          r.assign_attributes(attrs)
-          run_before_update_callbacks(r)
+
+          if r
+            attrs = controller.send(:filter_attributes, r.class.name, attrs, :update)
+            handle_resource(child_definition, r, attrs) if child_definition
+            r.assign_attributes(attrs)
+            run_before_update_callbacks(r)
+          end
         else
           inheritance_column = parent.class.reflect_on_association(name).klass.inheritance_column
           # need to pass in inheritance column in build to get correct class

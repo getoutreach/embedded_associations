@@ -11,15 +11,21 @@ class PostsController < ApplicationController
   def create
     params = post_params
     handle_embedded_associations(resource, params)
-    resource.update_attributes(params)
-    render json: resource
+    if resource.update_attributes(params)
+      render json: resource
+    else
+      render json: {}, status: 422
+    end
   end
 
   def update
     params = post_params
     handle_embedded_associations(resource, params)
-    resource.update_attributes(params)
-    render json: resource
+    if resource.update_attributes(params)
+      render json: resource
+    else
+      render json: {}, status: 422
+    end
   end
 
   def destroy
@@ -46,7 +52,7 @@ class PostsController < ApplicationController
       :title,
       comments: [:content, user: [:name, :email, account: [:note] ]],
       user: [:type, :name, :email, account: [:note] ],
-      tags: [:name],
+      tags: [:id, :name],
       category: [:name]
     )
   end

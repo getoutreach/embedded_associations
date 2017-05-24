@@ -31,6 +31,7 @@ describe PostsController, type: :controller do
         hash[:tags] += [{},{}]
         json = post :update, :id => resource.id, post: hash
 
+        expect(json.response_code).to eq(200)
         expect(Post.count).to eq(1)
         expect(Tag.count).to eq(4)
 
@@ -41,6 +42,7 @@ describe PostsController, type: :controller do
         hash[:tags] = hash[:tags].take(1)
         json = post :update, :id => resource.id, post: hash
 
+        expect(json.response_code).to eq(200)
         expect(Post.count).to eq(1)
         expect(Tag.count).to eq(1)
 
@@ -51,6 +53,7 @@ describe PostsController, type: :controller do
         hash.delete(:tags)
         json = post :update, :id => resource.id, post: hash
 
+        expect(json.response_code).to eq(200)
         expect(Post.count).to eq(1)
         expect(Tag.count).to eq(2)
 
@@ -61,6 +64,7 @@ describe PostsController, type: :controller do
         hash[:tags].first[:name] = 'modified'
         json = post :update, :id => resource.id, post: hash
 
+        expect(json.response_code).to eq(200)
         expect(Post.count).to eq(1)
         expect(Tag.count).to eq(2)
 
@@ -69,8 +73,33 @@ describe PostsController, type: :controller do
         Tag.all.each{ |t| expect(t.post).to_not be_nil }
       end
 
-    end
+      it "should ignore missing child records" do
+        hash[:tags].first[:name] = "modified"
+        hash[:tags] += [{ id: 0, name: "foo" }]
+        json = post :update, :id => resource.id, post: hash
 
+        expect(json.response_code).to eq(200)
+        expect(Post.count).to eq(1)
+        expect(Tag.count).to eq(2)
+
+        expect(Tag.first.name).to eq("modified")
+      end
+
+      context "with a named tag and a uniqueness constraint" do
+        let(:tags) {[ Tag.create(name: "foo") ]}
+
+        it "should require an ID to supply existing records" do
+          json = post :update, id: resource.id, post: hash.merge(tags: [{ name: "foo" }])
+          expect(json.response_code).to eq(422)
+
+          json = post :update, id: resource.id, post: hash.merge(tags: [{ id: tags[0].id, name: "foo" }])
+          expect(json.response_code).to eq(200)
+          expect(Post.count).to eq(1)
+          expect(Tag.count).to eq(1)
+          expect(Tag.first.name).to eq("foo")
+        end
+      end
+    end
   end
 
   describe "embedded belongs_to" do
